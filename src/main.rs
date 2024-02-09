@@ -66,7 +66,7 @@ pub mod round {
     const LOST_CONDITION: usize = 0;
 
     pub fn start() -> crate::Result<()> {
-        let word = dictionary::next_word()?;
+        let word = dictionary::next_word()?.to_ascii_lowercase();
         let mut mistakes = 0;
         let mut masked = word.chars()
             .map(|_| MASK)
@@ -79,24 +79,19 @@ pub mod round {
 
             match guess.chars().count() {
                 1 => {
-                    let letter = guess.chars().last().unwrap();
+                    let letter = guess.chars().last()
+                        .unwrap()
+                        .to_ascii_lowercase();
 
-                    if masked.contains(&letter) {
-                        let mut changes = 0;
-
+                    if word.contains(letter) {
                         word.chars().enumerate()
                             .filter(|(_, mystery_letter)| {
-                                mystery_letter.eq_ignore_ascii_case(&letter)
+                                mystery_letter.eq(&letter)
                             })
                             .map(|(idx, _)| idx)
                             .for_each(|idx| {
-                                masked[idx] = letter.to_ascii_lowercase();
-                                changes += 1;
+                                masked[idx] = letter;
                             });
-
-                        if changes == 0 {
-                            output::writeln("letter already guessed")?;
-                        }
                     } else {
                         mistakes += 1;
                     }
