@@ -89,7 +89,7 @@ pub mod round {
                         .map(|(idx, _)| idx)
                         .collect::<Vec<usize>>();
 
-                    if indices.len() != 0 {
+                    if !indices.is_empty() {
                         if masked.contains(&letter) {
                             output::writeln("letter already guessed")?;
                         } else {
