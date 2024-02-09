@@ -3,11 +3,63 @@ use std::error::Error;
 type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
 pub fn main() -> Result<()> {
-    Ok(())
+    hangman::start()
+}
+
+pub mod hangman {
+    use crate::{menu, output};
+
+    pub fn start() -> crate::Result<()> {
+        output::writeln("Welcome to hangman game!")?;
+        output::writeln("Opening menu..")?;
+
+        menu::open()
+    }
+}
+
+pub mod menu {
+    use crate::{input, output};
+
+    const START: &str = "S";
+    const EXIT: &str = "E";
+
+    pub fn open() -> crate::Result<()> {
+        let mut exit = false;
+
+        while !exit {
+            self::print_options()?;
+
+            let option = input::readln()?;
+
+            match option.as_str() {
+                START => {
+                    output::writeln("Starting new round..")?;
+                },
+
+                EXIT => {
+                    output::writeln("Exiting from menu..")?;
+                    exit = true;
+                },
+
+                _ => {}
+            }
+        }
+        
+        Ok(())
+    }
+
+    pub fn print_options() -> crate::Result<()> {
+        output::write_empty()?;
+        output::writeln("Menu options:")?;
+        output::writeln(&format!("   [{}] - to start new round", START))?;
+        output::writeln(&format!("   [{}] - to exit from menu", EXIT))?;
+
+        Ok(())
+    }
 }
 
 pub mod input {
-    use std::{fmt::{Debug, Display}, io::BufRead};
+    use std::{error::Error, fmt::{Debug, Display}, io::BufRead};
 
     type Result<T> = std::result::Result<T, InputError>;
 
@@ -34,6 +86,8 @@ pub mod input {
             Debug::fmt(self, f)
         }
     }
+
+    impl Error for InputError {}
 }
 
 pub mod output {
@@ -46,6 +100,10 @@ pub mod output {
         let mut stream = stdout.lock();
 
         writeln!(stream, "{}", data).map_err(|_| OutputError {})
+    }
+
+    pub fn write_empty() -> Result<()> {
+        writeln("")
     }
 
     pub struct OutputError;
