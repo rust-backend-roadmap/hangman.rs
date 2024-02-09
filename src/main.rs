@@ -58,6 +58,65 @@ pub mod menu {
     }
 }
 
+pub mod dictionary {
+    use std::{error::Error, fmt::{Debug, Display}, fs::File, io::{BufRead, BufReader}};
+
+    use rand::Rng;
+
+    const DEFAULT: &str = "dictionaries/default.txt";
+
+    type Result<T> = std::result::Result<T, DictionaryError>;
+
+    pub fn next_word() -> Result<String> {
+        let file = File::open(DEFAULT)
+            .map_err(|_| DictionaryError::NotFound)?;
+
+        let mut stream = BufReader::new(file);
+        let mut buf = String::new();
+
+        stream.read_line(&mut buf).map_err(|_| DictionaryError::ReadError)?;
+        let words = buf.trim_end().parse::<i32>()
+            .map_err(|_| DictionaryError::WrongFormat)?;
+
+        let choosen = choose_number(words);
+        for _ in 0..=choosen {
+            buf.clear();
+            stream.read_line(&mut buf).map_err(|_| DictionaryError::ReadError)?;
+        }
+
+        Ok(buf.trim_end().into())
+    }
+
+    fn choose_number(words: i32) -> i32 {
+        let mut rng = rand::thread_rng();
+        rng.gen_range(0..words)
+    }
+
+    pub enum DictionaryError {
+        NotFound,
+        WrongFormat,
+        ReadError
+    }
+
+    impl Debug for DictionaryError {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            match self {
+                Self::NotFound => write!(f, "DictionaryNotFound"),
+                Self::WrongFormat => write!(f, "WrongDictionaryFormat"),
+                Self::ReadError => write!(f, "ReadDictionaryError"),
+            }
+        }
+    }
+
+    impl Display for DictionaryError {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            Debug::fmt(self, f)
+        }
+    }
+
+    impl Error for DictionaryError {}
+}
+
 pub mod input {
     use std::{error::Error, fmt::{Debug, Display}, io::BufRead};
 
