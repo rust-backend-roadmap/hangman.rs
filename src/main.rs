@@ -81,19 +81,21 @@ pub mod round {
                 1 => {
                     let letter = guess.chars().last().unwrap();
 
-                    let indices = word.chars()
-                        .enumerate()
-                        .filter(|(_, mystery_letter)| {
-                            mystery_letter.eq_ignore_ascii_case(&letter)
-                        })
-                        .map(|(idx, _)| idx)
-                        .collect::<Vec<usize>>();
+                    if masked.contains(&letter) {
+                        let mut changes = 0;
 
-                    if !indices.is_empty() {
-                        if masked.contains(&letter) {
+                        word.chars().enumerate()
+                            .filter(|(_, mystery_letter)| {
+                                mystery_letter.eq_ignore_ascii_case(&letter)
+                            })
+                            .map(|(idx, _)| idx)
+                            .for_each(|idx| {
+                                masked[idx] = letter.to_ascii_lowercase();
+                                changes += 1;
+                            });
+
+                        if changes == 0 {
                             output::writeln("letter already guessed")?;
-                        } else {
-                            indices.iter().for_each(|&idx| masked[idx] = letter.to_ascii_lowercase());
                         }
                     } else {
                         mistakes += 1;
