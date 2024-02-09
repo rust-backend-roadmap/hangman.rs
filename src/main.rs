@@ -18,7 +18,7 @@ pub mod hangman {
 }
 
 pub mod menu {
-    use crate::{input, output};
+    use crate::{input, output, round};
 
     const START: &str = "S";
     const EXIT: &str = "E";
@@ -34,6 +34,7 @@ pub mod menu {
             match option.as_str() {
                 START => {
                     output::writeln("Starting new round..")?;
+                    round::start()?;
                 },
 
                 EXIT => {
@@ -58,12 +59,170 @@ pub mod menu {
     }
 }
 
+pub mod round {
+    use crate::{dictionary, input, output};
+
+    const MASK: char = '*';
+    const LOST_CONDITION: usize = 0;
+
+    pub fn start() -> crate::Result<()> {
+        let word = dictionary::next_word()?;
+        let mut mistakes = 0;
+        let mut masked = word.chars()
+            .map(|_| MASK)
+            .collect::<Vec<char>>();
+        
+        while mistakes < 6 && masked.contains(&MASK) {
+            print_stage(&masked, mistakes)?;
+            
+            let guess = input::readln()?;
+
+            match guess.chars().count() {
+                1 => {
+                    let letter = guess.chars().last().unwrap();
+
+                    let indices = word.chars()
+                        .enumerate()
+                        .filter(|(_, mystery_letter)| {
+                            mystery_letter.eq_ignore_ascii_case(&letter)
+                        })
+                        .map(|(idx, _)| idx)
+                        .collect::<Vec<usize>>();
+
+                    if indices.len() != 0 {
+                        if masked.contains(&letter) {
+                            output::writeln("letter already guessed")?;
+                        } else {
+                            indices.iter().for_each(|&idx| masked[idx] = letter.to_ascii_lowercase());
+                        }
+                    } else {
+                        mistakes += 1;
+                    }
+                },
+
+                _ => {
+                    output::writeln("wrong guess")?;
+                }
+            }
+        }
+
+        match mistakes {
+            LOST_CONDITION => {
+                output::writeln(&format!("You lost, mystery word is {}", &word))?
+            },
+
+            _ => {
+                output::writeln(&format!("That's right, mystery word is {}", &word))?
+            }
+        }
+
+        Ok(())
+    }
+
+    fn print_stage(masked: &[char], mistakes: usize) -> crate::Result<()> {
+        output::write_empty()?;
+
+        match mistakes {
+            0 => {
+                output::writeln(r#"
+                    +---+
+                    |   |
+                        |
+                        |
+                        |
+                        |
+                    =========
+                "#)?;
+            },
+
+            1 => {
+                output::writeln(r#"
+                    +---+
+                    |   |
+                    O   |
+                        |
+                        |
+                        |
+                    =========
+                "#)?;
+            },
+
+            2 => {
+                output::writeln(r#"
+                    +---+
+                    |   |
+                    O   |
+                    |   |
+                        |
+                        |
+                    =========
+                "#)?;
+            },
+
+            3 => {
+                output::writeln(r#"
+                    +---+
+                    |   |
+                    O   |
+                   /|   |
+                        |
+                        |
+                    =========
+                "#)?;
+            },
+
+            4 => {
+                output::writeln(r#"
+                    +---+
+                    |   |
+                    O   |
+                   /|\  |
+                        |
+                        |
+                    =========
+                "#)?;
+            },
+
+            5 => {
+                output::writeln(r#"
+                    +---+
+                    |   |
+                    O   |
+                   /|\  |
+                   /    |
+                        |
+                    =========
+                "#)?;
+            },
+            
+            6 => {
+                output::writeln(r#"
+                    +---+
+                    |   |
+                    O   |
+                   /|\  |
+                   / \  |
+                        |
+                    =========
+                "#)?;
+            },
+
+            _ => {}
+        }
+
+        output::writeln(&format!("mistakes - {}", mistakes))?;
+        output::writeln(&format!("{:?}", masked))?;
+
+        Ok(())
+    }
+}
+
 pub mod dictionary {
     use std::{error::Error, fmt::{Debug, Display}, fs::File, io::{BufRead, BufReader}};
 
     use rand::Rng;
 
-    const DEFAULT: &str = "dictionaries/default.txt";
+    const DEFAULT: &str = "default.txt";
 
     type Result<T> = std::result::Result<T, DictionaryError>;
 
