@@ -3,9 +3,37 @@ use std::error::Error;
 type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
 pub fn main() -> Result<()> {
-    output::writeln("dad")?;
-    
     Ok(())
+}
+
+pub mod input {
+    use std::{fmt::{Debug, Display}, io::BufRead};
+
+    type Result<T> = std::result::Result<T, InputError>;
+
+    pub fn readln() -> Result<String> {
+        let stdin = std::io::stdin();
+        let mut stream = stdin.lock();
+        let mut buf = String::new();
+
+        stream.read_line(&mut buf).map_err(|_| InputError {})?;
+
+        Ok(buf.trim_end().into())
+    }
+
+    pub struct InputError;
+
+    impl Debug for InputError {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            f.debug_struct("InputError").finish()
+        }
+    }
+
+    impl Display for InputError {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            Debug::fmt(self, f)
+        }
+    }
 }
 
 pub mod output {
