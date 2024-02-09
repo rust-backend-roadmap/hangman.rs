@@ -7,3 +7,4 @@ repository = "https://github.com/rust-backend-roadmap/hangman.rs"
 rust-version = "1.75.0"
 
 [dependencies]
+rand = { version = "0.8.5" }
